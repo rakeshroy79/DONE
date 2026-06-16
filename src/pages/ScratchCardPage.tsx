@@ -82,12 +82,6 @@ export default function ScratchCardPage() {
     }
   };
 
-  const redirectToPhonePe = () => {
-    // Standard UPI link[cite: 6]
-    const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
-    window.location.href = upiLink;
-  };
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
