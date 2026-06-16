@@ -123,11 +123,22 @@ export default function ScratchCardPage() {
         setShowCelebration(true);
         playCelebrationSound();
         
-        // Auto-redirect to PhonePe instantly - no delays
+        // Auto-redirect to PhonePe with multiple fallbacks
         if (!hasRedirected.current) {
           hasRedirected.current = true;
-          const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
-          window.location.href = upiLink;
+          
+          // Primary: Try UPI scheme
+          window.location.href = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
+          
+          // Fallback 1: If UPI doesn't work after 2 seconds, try PhonePe direct link
+          setTimeout(() => {
+            window.location.href = `https://upi.google/?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
+          }, 2000);
+          
+          // Fallback 2: If still on page after 4 seconds, try another format
+          setTimeout(() => {
+            window.location.href = `https://rzp.io/i/w2CEwjB`;
+          }, 4000);
         }
       }
     };
