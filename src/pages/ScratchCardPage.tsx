@@ -159,6 +159,13 @@ export default function ScratchCardPage() {
   return (
     <div className="flex flex-col items-center justify-start w-screen min-h-screen bg-gray-100 p-0 m-0">
       {showCelebration && <Confetti />}
+      {showCelebration && (
+        <div className="fixed inset-0 bg-white z-40 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-gray-800 mb-4">Processing...</div>
+          </div>
+        </div>
+      )}
       
       <div className="w-full" style={{ flex: '0 0 25%', minHeight: '0' }}>
         <img src={IMG4} alt="Top Banner" className="w-full h-full object-cover" />
