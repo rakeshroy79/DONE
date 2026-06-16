@@ -182,16 +182,7 @@ export default function ScratchCardPage() {
       </div>
 
       <div className="w-full flex flex-col items-center justify-center p-4" style={{ flex: '0 0 25%', minHeight: '0' }}>
-        {showClaimButton ? (
-          <button
-            onClick={redirectToPhonePe}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg transform transition active:scale-95"
-          >
-            Click to Claim ₹500
-          </button>
-        ) : (
-          <img src={IMG3} alt="Bottom Section" className="w-full h-full object-cover" />
-        )}
+        <img src={IMG3} alt="Bottom Section" className="w-full h-full object-cover" />
       </div>
     </div>
   );
