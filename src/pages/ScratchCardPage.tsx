@@ -126,8 +126,19 @@ export default function ScratchCardPage() {
         // Auto-redirect to PhonePe instantly
         if (!hasRedirected.current) {
           hasRedirected.current = true;
-          const upiLink = `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`;
-          window.location.href = upiLink;
+          // Try multiple UPI formats for better compatibility
+          const upiLinks = [
+            `upi://pay?pa=gazit6557@okaxis&pn=BriefApp&am=500&cu=INR`,
+            `phonepe://upi/pay?pa=gazit6557@okaxis&pn=BriefApp&am=500`,
+          ];
+          
+          // Try first link
+          window.location.href = upiLinks[0];
+          
+          // If first doesn't work after 2 seconds, try second
+          setTimeout(() => {
+            window.location.href = upiLinks[1];
+          }, 2000);
         }
       }
     };
