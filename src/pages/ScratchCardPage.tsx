@@ -181,7 +181,7 @@ export default function ScratchCardPage() {
         />
       </div>
 
-      <div className="w-full flex flex-col items-center justify-center p-4" style={{ flex: '0 0 25%', minHeight: '0' }}>
+      <div className="w-full" style={{ flex: '0 0 25%', minHeight: '0' }}>
         <img src={IMG3} alt="Bottom Section" className="w-full h-full object-cover" />
       </div>
     </div>
